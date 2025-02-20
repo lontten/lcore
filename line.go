@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 )
 
 // Task 定义任务类型
@@ -34,12 +35,14 @@ func NewThreadPool(maxWorkers int, queueSize int, rejectPolicy RejectPolicy) *Th
 // Start 启动线程池
 func (pool *ThreadPool) Start() {
 	for i := 0; i < pool.maxWorkers; i++ {
+		pool.wg.Add(1)
 		go pool.worker()
 	}
 }
 
 // worker 工作线程
 func (pool *ThreadPool) worker() {
+	defer pool.wg.Done()
 	for {
 		select {
 		case task, ok := <-pool.taskQueue:
@@ -47,7 +50,6 @@ func (pool *ThreadPool) worker() {
 				return
 			}
 			task()
-			pool.wg.Done()
 		case <-pool.stop:
 			return
 		}
@@ -58,7 +60,6 @@ func (pool *ThreadPool) worker() {
 func (pool *ThreadPool) Submit(task Task) error {
 	select {
 	case pool.taskQueue <- task:
-		pool.wg.Add(1)
 		return nil
 	default:
 		if pool.rejectPolicy != nil {
@@ -71,6 +72,9 @@ func (pool *ThreadPool) Submit(task Task) error {
 
 // Shutdown 关闭线程池
 func (pool *ThreadPool) Shutdown() {
+	for len(pool.taskQueue) > 0 {
+		time.Sleep(1 * time.Second)
+	}
 	close(pool.stop)      // 发送停止信号
 	pool.wg.Wait()        // 等待所有任务完成
 	close(pool.taskQueue) // 关闭任务队列
@@ -100,7 +104,6 @@ func DiscardOldestPolicy(task Task, pool *ThreadPool) {
 		select {
 		case <-pool.taskQueue: // 丢弃最老的任务
 			fmt.Println("Oldest task discarded by DiscardOldestPolicy")
-			pool.wg.Done() // 任务被丢弃，减少 WaitGroup 计数
 		default:
 		}
 
@@ -108,8 +111,7 @@ func DiscardOldestPolicy(task Task, pool *ThreadPool) {
 		select {
 		case pool.taskQueue <- task:
 			fmt.Println("New task submitted by DiscardOldestPolicy")
-			pool.wg.Add(1) // 新任务被提交，增加 WaitGroup 计数
-			return         // 提交成功，退出循环
+			return // 提交成功，退出循环
 		default:
 			// taskQueue 已满，继续重试
 		}
