@@ -20,6 +20,8 @@ type ThreadPool struct {
 	rejectPolicy RejectPolicy  // 拒绝策略
 	stop         chan struct{} // 停止信号
 	wg           sync.WaitGroup
+
+	mainRun bool // 主线程是否运行任务中
 }
 
 // NewThreadPool 创建一个新的线程池
@@ -72,7 +74,7 @@ func (pool *ThreadPool) Submit(task Task) error {
 
 // Shutdown 关闭线程池
 func (pool *ThreadPool) Shutdown() {
-	for len(pool.taskQueue) > 0 {
+	for len(pool.taskQueue) > 0 || pool.mainRun {
 		time.Sleep(1 * time.Second)
 	}
 	close(pool.stop)      // 发送停止信号
@@ -90,7 +92,9 @@ func AbortPolicy(task Task, pool *ThreadPool) {
 // CallerRunsPolicy 由提交任务的 Goroutine 自己执行任务
 func CallerRunsPolicy(task Task, pool *ThreadPool) {
 	fmt.Println("Task executed by CallerRunsPolicy")
+	pool.mainRun = true
 	task()
+	pool.mainRun = false
 }
 
 // DiscardPolicy 直接丢弃任务
