@@ -59,7 +59,7 @@ func (t Time) Value() (driver.Value, error) {
 	if t.Time.UnixNano() == zeroTime.UnixNano() {
 		return nil, nil
 	}
-	return t.Time, nil
+	return t.Format("15:04:05"), nil
 }
 
 func (t *Time) Scan(v any) error {
@@ -186,7 +186,7 @@ func (t Date) Value() (driver.Value, error) {
 	if t.Time.UnixNano() == zeroTime.UnixNano() {
 		return nil, nil
 	}
-	return t.Time, nil
+	return t.Format("2006-01-02"), nil
 }
 
 // Scan valueof jstime.Time
