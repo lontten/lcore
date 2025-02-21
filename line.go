@@ -2,7 +2,6 @@ package lcore
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 )
@@ -86,12 +85,10 @@ func (pool *ThreadPool) Shutdown() {
 
 // AbortPolicy 直接拒绝任务并抛出错误
 func AbortPolicy(task Task, pool *ThreadPool) {
-	fmt.Println("Task rejected by AbortPolicy")
 }
 
 // CallerRunsPolicy 由提交任务的 Goroutine 自己执行任务
 func CallerRunsPolicy(task Task, pool *ThreadPool) {
-	fmt.Println("Task executed by CallerRunsPolicy")
 	pool.mainRun = true
 	task()
 	pool.mainRun = false
@@ -99,7 +96,6 @@ func CallerRunsPolicy(task Task, pool *ThreadPool) {
 
 // DiscardPolicy 直接丢弃任务
 func DiscardPolicy(task Task, pool *ThreadPool) {
-	fmt.Println("Task discarded by DiscardPolicy")
 }
 
 // DiscardOldestPolicy 丢弃队列中最老的任务，然后重新提交新任务
@@ -107,14 +103,12 @@ func DiscardOldestPolicy(task Task, pool *ThreadPool) {
 	for {
 		select {
 		case <-pool.taskQueue: // 丢弃最老的任务
-			fmt.Println("Oldest task discarded by DiscardOldestPolicy")
 		default:
 		}
 
 		// 尝试提交新任务
 		select {
 		case pool.taskQueue <- task:
-			fmt.Println("New task submitted by DiscardOldestPolicy")
 			return // 提交成功，退出循环
 		default:
 			// taskQueue 已满，继续重试
