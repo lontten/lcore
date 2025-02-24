@@ -19,6 +19,7 @@ func NewKeyLock(size int) *KeyLock {
 	}
 	return &KeyLock{
 		mu:    sync.RWMutex{},
+		locks: make(map[string]*sync.Mutex),
 		cache: l,
 	}
 }
@@ -32,6 +33,7 @@ func (kl *KeyLock) Lock(key string) {
 		mtx.Lock()
 		return
 	}
+	kl.mu.RUnlock()
 	kl.mu.Lock()
 
 	mtx, ok = kl.cache.Get(key)
