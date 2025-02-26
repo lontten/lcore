@@ -24,8 +24,16 @@ func TimeOf(t time.Time) Time {
 	return Time{timeOnly}
 }
 func TimePOf(t time.Time) *Time {
-	timeOnly := time.Date(0, 0, 0, t.Hour(), t.Minute(), t.Second(), 0, t.Location())
-	return &Time{timeOnly}
+	timeOnly := TimeOf(t)
+	return &timeOnly
+}
+func TimeOfHms(hour, min, sec int) Time {
+	timeOnly := time.Date(0, 0, 0, hour, min, sec, 0, time.Local)
+	return Time{timeOnly}
+}
+func TimePOfHms(hour, min, sec int) *Time {
+	timeOnly := TimeOfHms(hour, min, sec)
+	return &timeOnly
 }
 func (t Time) ToGoTime() time.Time {
 	return time.Date(0, 0, 0, t.Hour(), t.Minute(), t.Second(), 0, t.Location())
@@ -148,10 +156,17 @@ func DateOf(t time.Time) Date {
 	return Date{dateOnly}
 }
 func DatePOf(t time.Time) *Date {
-	dateOnly := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
-	return &Date{dateOnly}
+	dateOnly := DateOf(t)
+	return &dateOnly
 }
-
+func DateOfYmd(year, month, day int) Date {
+	dateOnly := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
+	return Date{dateOnly}
+}
+func DatePOfYmd(year, month, day int) *Date {
+	dateOnly := DateOfYmd(year, month, day)
+	return &dateOnly
+}
 func (t Date) ToGoTime() time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }
@@ -164,6 +179,20 @@ func (t Date) ToDateTimeP() *DateTime {
 
 func (t Date) ToString() string {
 	return t.Format(`2006-01-02`)
+}
+
+// Before
+// t<d 返回true
+// t>=d 返回false
+func (t Date) Before(d Date) bool {
+	return t.ToGoTime().Before(d.ToGoTime())
+}
+
+// After
+// t>d 返回true
+// t<=d 返回false
+func (t Date) After(d Date) bool {
+	return t.ToGoTime().After(d.ToGoTime())
 }
 
 func (t Date) MarshalJSON() ([]byte, error) {
