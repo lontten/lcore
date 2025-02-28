@@ -1,4 +1,4 @@
-package utils
+package lcutils
 
 import (
 	"fmt"
@@ -135,4 +135,16 @@ func CopyTemplateToTempFile(templatePath string) (tmpFile *os.File, err error) {
 		return
 	}
 	return
+}
+
+func GetFileName(path string) string {
+	return filepath.Base(path)
+}
+func GetFileNameNoSuffix(path string) string {
+	return strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+}
+
+// 获取文件后缀,不带点
+func GetFileSuffix(path string) string {
+	return strings.TrimPrefix(filepath.Ext(path), ".")
 }

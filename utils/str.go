@@ -1,8 +1,16 @@
-package utils
+package lcutils
 
-func StrNilToStr(s *string) string {
+import "strings"
+
+func HasText(s string) bool {
+	s = strings.TrimSpace(s)
+	return len(s) > 0
+}
+
+func HasTextP(s *string) bool {
 	if s == nil {
-		return ""
+		return false
 	}
-	return *s
+	var s2 = strings.TrimSpace(*s)
+	return len(s2) > 0
 }
