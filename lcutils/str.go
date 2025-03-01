@@ -14,3 +14,21 @@ func HasTextP(s *string) bool {
 	var s2 = strings.TrimSpace(*s)
 	return len(s2) > 0
 }
+
+func StrContainsAll(str string, list ...string) bool {
+	for _, v := range list {
+		if !strings.Contains(str, v) {
+			return false
+		}
+	}
+	return true
+}
+
+func StrContainsAny(str string, list ...string) bool {
+	for _, v := range list {
+		if strings.Contains(str, v) {
+			return true
+		}
+	}
+	return false
+}
