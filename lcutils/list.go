@@ -63,3 +63,19 @@ func BoolIntersection[T comparable](list1, list2 []T) []T {
 	}
 	return list1
 }
+
+// 去重函数，适用于任何可比较的类型
+func RemoveDuplicates[T comparable](slice []T) []T {
+	// 创建一个 map 用于存储已出现的元素
+	seen := make(map[T]bool)
+	result := []T{}
+
+	// 遍历切片，将未重复的元素添加到结果中
+	for _, item := range slice {
+		if !seen[item] {
+			seen[item] = true
+			result = append(result, item)
+		}
+	}
+	return result
+}
