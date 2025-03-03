@@ -1,14 +1,14 @@
 package lcutils
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
+import "golang.org/x/exp/constraints"
 
 // Num2Str 将任意整数类型的数值转换为字符串
-func Num2Str[T int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64](num T) string {
-	// 注意：需要根据 T 是否是有符号类型调整转换逻辑
-	if num < 0 {
-		return "-" + strconv.FormatUint(uint64(num), 10)
-	}
-	return strconv.FormatUint(uint64(num), 10)
+func Num2Str[T constraints.Signed | constraints.Unsigned](num T) string {
+	return fmt.Sprintf("%d", num)
 }
 
 // Str2Num 将字符串转换为int64数值，支持任意进制解析
