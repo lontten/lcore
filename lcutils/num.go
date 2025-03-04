@@ -7,7 +7,7 @@ import (
 import "golang.org/x/exp/constraints"
 
 // Num2Str 将任意整数类型的数值转换为字符串
-func Num2Str[T constraints.Signed | constraints.Unsigned](num T) string {
+func Num2Str[T constraints.Integer](num T) string {
 	return fmt.Sprintf("%d", num)
 }
 

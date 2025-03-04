@@ -1,27 +1,29 @@
 package types
 
-func NewInt(i int) *int {
-	var t = i
+import "golang.org/x/exp/constraints"
+
+func NewInt[T constraints.Integer](i T) *int {
+	var t = int(i)
 	return &t
 }
 
-func NewInt8(i int8) *int8 {
-	var t = i
+func NewInt8[T constraints.Integer](i T) *int8 {
+	var t = int8(i)
 	return &t
 }
 
-func NewInt16(i int16) *int16 {
-	var t = i
+func NewInt16[T constraints.Integer](i T) *int16 {
+	var t = int16(i)
 	return &t
 }
 
-func NewInt32(i int32) *int32 {
-	var t = i
+func NewInt32[T constraints.Integer](i T) *int32 {
+	var t = int32(i)
 	return &t
 }
 
-func NewInt64(i int64) *int64 {
-	var t = i
+func NewInt64[T constraints.Integer](i T) *int64 {
+	var t = int64(i)
 	return &t
 }
 
