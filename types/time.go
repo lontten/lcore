@@ -91,7 +91,7 @@ func (t *Time) Scan(v any) error {
 	if len(s) < 8 {
 		return nil
 	}
-	now, err := time.Parse(`15:04:05`, s[len(s)-8:])
+	now, err := time.ParseInLocation(`15:04:05`, s[len(s)-8:], time.Local)
 	if err != nil {
 		return err
 	}
@@ -240,7 +240,7 @@ func (t *Date) Scan(v any) error {
 	if len(s) < 10 {
 		return nil
 	}
-	now, err := time.Parse(`2006-01-02`, s[:10])
+	now, err := time.ParseInLocation(`2006-01-02`, s[:10], time.Local)
 	if err != nil {
 		return err
 	}
@@ -355,7 +355,7 @@ func (t *DateTime) Scan(v any) error {
 	if len(s) < 19 {
 		return nil
 	}
-	now, err := time.Parse(`2006-01-02 15:04:05`, s)
+	now, err := time.ParseInLocation(`2006-01-02 15:04:05`, s, time.Local)
 	if err != nil {
 		return err
 	}
@@ -425,7 +425,7 @@ func (t Time) AddData(d Date) DateTime {
 		d.Time.Day(),
 		t.Hour(),
 		t.Minute(),
-		t.Second(), 0, nil,
+		t.Second(), 0, time.Local,
 	)}
 }
 
@@ -482,7 +482,7 @@ func (t *AutoDateTime) Scan(v any) error {
 	default:
 		return fmt.Errorf("can not convert %v to types.AutoDateTime", v)
 	}
-	now, err := time.Parse(`2006-01-02 15:04:05`, s)
+	now, err := time.ParseInLocation(`2006-01-02 15:04:05`, s, time.Local)
 	if err != nil {
 		return err
 	}
