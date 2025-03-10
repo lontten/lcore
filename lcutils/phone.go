@@ -13,8 +13,8 @@ func CheckPhoneAll(phoneNumber string) bool {
 		return true
 	}
 
-	// 固话
-	pattern = `^0\d{2,3}-\d{7,8}$`
+	// 固话 区号（2-3位） + 连字符 + 本地号码（7-8位） + 连字符 + 分机号（2-4位）
+	pattern = `^0\d{2,3}-\d{7,8}(-\d{2,4})?$`
 	regex = regexp.MustCompile(pattern)
 	matched = regex.MatchString(phoneNumber)
 	if matched {
@@ -35,8 +35,8 @@ func CheckPhone(phoneNumber string) bool {
 }
 
 func CheckLandline(phoneNumber string) bool {
-	// 固话
-	pattern := `^0\d{2,3}-\d{7,8}$`
+	// 固话 区号（2-3位） + 连字符 + 本地号码（7-8位） + 连字符 + 分机号（2-4位）
+	pattern := `^0\d{2,3}-\d{7,8}(-\d{2,4})?$`
 	regex := regexp.MustCompile(pattern)
 	matched := regex.MatchString(phoneNumber)
 	if matched {
