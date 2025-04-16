@@ -32,3 +32,23 @@ func StrContainsAny(str string, list ...string) bool {
 	}
 	return false
 }
+
+// 第一个key右边第一个子串
+func FirstStrRight(str string, key string) string {
+	index := strings.Index(str, key)
+	if index == -1 {
+		return "" // 未找到子串
+	}
+	start := index + len(key)
+	return str[start:]
+}
+
+// 最后一个key右边第一个子串
+func LastStrRight(str string, key string) string {
+	index := strings.LastIndex(str, key)
+	if index == -1 {
+		return "" // 未找到子串
+	}
+	start := index + len(key)
+	return str[start:]
+}

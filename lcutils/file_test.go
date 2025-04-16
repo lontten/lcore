@@ -1,6 +1,9 @@
 package lcutils
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestGetFileName(t *testing.T) {
 	type args struct {
@@ -11,6 +14,13 @@ func TestGetFileName(t *testing.T) {
 		args args
 		want string
 	}{
+		{
+			name: "test1",
+			args: args{
+				path: "/Users/go/src/github.com/utils/文件.go",
+			},
+			want: "文件.go",
+		},
 		{
 			name: "test1",
 			args: args{

@@ -7,13 +7,12 @@ import (
 )
 
 func main() {
-	lock()
+	line()
 }
 func line() {
-	for range 40 {
-		// 创建一个线程池，最大线程数为 3，任务队列大小为 5，使用 CallerRunsPolicy 拒绝策略
-		pool := lcore.NewThreadPool(3, 4, lcore.CallerRunsPolicy)
-		pool.Start()
+	for range 22 {
+		// 创建一个协程池，最大协程数为 3，任务队列大小为 5，使用 CallerRunsPolicy 拒绝策略
+		pool := lcore.NewPool(1000, 2000, lcore.CallerRunsPolicy)
 		defer pool.Shutdown()
 
 		// 提交 10 个任务
