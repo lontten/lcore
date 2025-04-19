@@ -13,10 +13,9 @@ type RejectPolicy func(task Task, pool *Pool)
 
 // Pool 协程池结构体
 type Pool struct {
-	maxWorkers   int           // 最大工作协程数
-	tasks        chan Task     // 任务队列
-	rejectPolicy RejectPolicy  // 拒绝策略
-	stop         chan struct{} // 停止信号
+	maxWorkers   int          // 最大工作协程数
+	tasks        chan Task    // 任务队列
+	rejectPolicy RejectPolicy // 拒绝策略
 	wg           sync.WaitGroup
 }
 
@@ -26,7 +25,6 @@ func NewPool(maxWorkers int, queueSize int, rejectPolicy RejectPolicy) *Pool {
 		maxWorkers:   maxWorkers,
 		tasks:        make(chan Task, queueSize),
 		rejectPolicy: rejectPolicy,
-		stop:         make(chan struct{}),
 	}
 	p.wg.Add(maxWorkers)
 
@@ -46,8 +44,6 @@ func (p *Pool) worker() {
 				return
 			}
 			task()
-		case <-p.stop:
-			return
 		}
 	}
 }
@@ -68,9 +64,8 @@ func (p *Pool) Submit(task Task) error {
 
 // Shutdown 关闭协程池
 func (p *Pool) Shutdown() {
-	close(p.stop)  // 发送停止信号
-	p.wg.Wait()    // 等待所有任务完成
 	close(p.tasks) // 关闭任务队列
+	p.wg.Wait()    // 等待所有任务完成
 }
 
 // 拒绝策略示例
@@ -81,6 +76,8 @@ func AbortPolicy(task Task, pool *Pool) {
 
 // CallerRunsPolicy 由提交任务的 Goroutine 自己执行任务
 func CallerRunsPolicy(task Task, pool *Pool) {
+	pool.wg.Add(1)
+	defer pool.wg.Done()
 	task()
 }
 
