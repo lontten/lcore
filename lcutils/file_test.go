@@ -1,7 +1,6 @@
 package lcutils
 
 import (
-	"strings"
 	"testing"
 )
 
