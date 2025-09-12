@@ -3,6 +3,7 @@ package lcutils
 // BoolDiff
 // list1-list2
 // 布尔-差集,
+// 有去重逻辑
 // 移除list1 中 所有的 list2 元素
 func BoolDiff[T comparable](list1, list2 []T) []T {
 	// 创建集合存储list1的元素
@@ -26,6 +27,7 @@ func BoolDiff[T comparable](list1, list2 []T) []T {
 
 // BoolEq
 // 布尔-相等
+// 有去重逻辑
 func BoolEq[T comparable](list1, list2 []T) bool {
 	return len(BoolDiff(list1, list2)) == 0 && len(BoolDiff(list2, list1)) == 0
 }
@@ -33,6 +35,7 @@ func BoolEq[T comparable](list1, list2 []T) bool {
 // BoolUnion
 // list1+list2
 // 布尔-并,
+// 有去重逻辑
 // list1 和 list2 元素，并集
 func BoolUnion[T comparable](list1, list2 []T) []T {
 	// 创建集合存储list1的元素
@@ -54,6 +57,7 @@ func BoolUnion[T comparable](list1, list2 []T) []T {
 // BoolIntersection
 // list1，list2相同的元素
 // 布尔-交集,
+// 有去重逻辑
 // list1 和 list2 元素，交集
 func BoolIntersection[T comparable](list1, list2 []T) []T {
 	// 创建集合存储list1的元素

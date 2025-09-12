@@ -87,3 +87,23 @@ func TestListTool_other(t *testing.T) {
 		Check()
 	as.True(check)
 }
+
+func TestBoolEq(t *testing.T) {
+	as := assert.New(t)
+	as.True(BoolEq([]int{1, 2, 3}, []int{1, 2, 3}))
+	as.False(BoolEq([]int{1, 2, 3}, []int{1, 2, 4}))
+	as.False(BoolEq([]int{1, 2, 3}, []int{1, 2}))
+	as.False(BoolEq([]int{1, 2, 3}, []int{1, 2, 3, 4}))
+	as.True(BoolEq([]int{1, 2, 3}, []int{1, 2, 3, 3}))
+	as.True(BoolEq([]int{1, 2, 3}, []int{3, 1, 2}))
+}
+
+func TestBoolDiff(t *testing.T) {
+	as := assert.New(t)
+	as.Equal([]int{3}, BoolDiff([]int{1, 2, 3}, []int{1, 2}))
+	as.Equal([]int{1}, BoolDiff([]int{1, 2, 3}, []int{2, 3}))
+	as.Equal([]int{1, 2}, BoolDiff([]int{1, 2, 3}, []int{3}))
+	as.Equal([]int{}, BoolDiff([]int{}, []int{1, 2, 3}))
+	as.Equal([]int{}, BoolDiff([]int{}, []int{}))
+	as.Equal([]int{}, BoolDiff([]int{1, 2, 3}, []int{1, 2, 3}))
+}
