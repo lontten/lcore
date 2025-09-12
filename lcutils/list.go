@@ -24,6 +24,12 @@ func BoolDiff[T comparable](list1, list2 []T) []T {
 	return list1
 }
 
+// BoolEq
+// 布尔-相等
+func BoolEq[T comparable](list1, list2 []T) bool {
+	return len(BoolDiff(list1, list2)) == 0 && len(BoolDiff(list2, list1)) == 0
+}
+
 // BoolUnion
 // list1+list2
 // 布尔-并,
@@ -88,4 +94,55 @@ func ListHas[T comparable](slice []T, item T) bool {
 		}
 	}
 	return false
+}
+
+type ListToolBuilder struct {
+	list   []any
+	hasAll []any
+	hasAny []any
+	notAll []any
+}
+
+func ListTool(list ...any) *ListToolBuilder {
+	return &ListToolBuilder{
+		list:   list,
+		hasAll: []any{},
+		hasAny: []any{},
+		notAll: []any{},
+	}
+}
+
+func (t *ListToolBuilder) HasAll(list ...any) *ListToolBuilder {
+	t.hasAll = append(t.hasAll, list...)
+	return t
+}
+func (t *ListToolBuilder) HasAny(list ...any) *ListToolBuilder {
+	t.hasAny = append(t.hasAny, list...)
+	return t
+}
+func (t *ListToolBuilder) NotAll(list ...any) *ListToolBuilder {
+	t.notAll = append(t.notAll, list...)
+	return t
+}
+func (t *ListToolBuilder) Check() bool {
+	if len(t.hasAll) > 0 {
+		var c = len(BoolIntersection(t.list, t.hasAll)) == len(t.hasAll)
+		if !c {
+			return false
+		}
+	}
+	if len(t.hasAny) > 0 {
+		var c = len(BoolIntersection(t.list, t.hasAny)) > 0
+		if !c {
+			return false
+		}
+	}
+	if len(t.notAll) > 0 {
+		var c = len(BoolIntersection(t.list, t.notAll)) == 0
+		if !c {
+			return false
+		}
+
+	}
+	return true
 }
