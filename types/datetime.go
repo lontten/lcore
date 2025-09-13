@@ -4,57 +4,150 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"github.com/jackc/pgtype"
 	"time"
+
+	"github.com/jackc/pgtype"
 )
 
-// datetime
-type DateTime struct {
-	time.Time
+// LocalDateTime 本地时区 日期时间
+type LocalDateTime struct {
+	data time.Time
 }
 
-func NowDateTime() DateTime {
-	return DateTime{time.Now()}
+// ----------------------- now ----------------------------
+
+// NowDateTime 当前日期时间
+func NowDateTime() LocalDateTime {
+	return LocalDateTime{time.Now()}
 }
 
-func NowDateTimeP() *DateTime {
-	return &DateTime{time.Now()}
+func NowDateTimeP() *LocalDateTime {
+	return &LocalDateTime{time.Now()}
 }
 
-func (t DateTime) ToString() string {
-	return t.Format(`2006-01-02 15:04:05`)
+// ----------------------- of ----------------------------
+
+func LocalDateTimeOf(v time.Time) LocalDateTime {
+	t := v.In(time.Local)
+	return LocalDateTime{t}
 }
-func (t DateTime) ToDate() Date {
-	return Date{t.ToGoTime()}
+func LocalDateTimePOf(v time.Time) *LocalDateTime {
+	dateOnly := LocalDateTimeOf(v)
+	return &dateOnly
 }
-func (t DateTime) ToDateP() *Date {
-	return &Date{t.ToGoTime()}
+func LocalDateTimeOfYmdHms(year, month, day, hour, min, sec int) LocalDateTime {
+	dateOnly := time.Date(year, time.Month(month), day, hour, min, sec, 0, time.Local)
+	return LocalDateTime{dateOnly}
 }
-func (t DateTime) MarshalJSON() ([]byte, error) {
-	tune := t.Format(`"2006-01-02 15:04:05"`)
+func LocalDateTimePOfYmdHms(year, month, day, hour, min, sec int) *LocalDateTime {
+	dateOnly := LocalDateTimeOfYmdHms(year, month, day, hour, min, sec)
+	return &dateOnly
+}
+
+// ----------------------- base ----------------------------
+
+func (t LocalDateTime) IsZero() bool {
+	return t.data.IsZero()
+}
+
+func (t LocalDateTime) String() string {
+	return t.data.Format(`2006-01-02 15:04:05`)
+}
+
+func (t LocalDateTime) Add(d *DurationOption) LocalDateTime {
+	if d == nil {
+		return t
+	}
+	return LocalDateTime{t.data.AddDate(d.year, d.month, d.day).Add(
+		time.Duration(d.hour)*time.Hour +
+			time.Duration(d.min)*time.Minute +
+			time.Duration(d.sec)*time.Second +
+			time.Duration(d.nsec)*time.Nanosecond,
+	)}
+}
+
+// ----------------------- comp ----------------------------
+
+// Before
+// t<d 返回true
+// t>=d 返回false
+func (t LocalDateTime) Before(d LocalDateTime) bool {
+	return t.ToGoTime().Before(d.ToGoTime())
+}
+
+// After
+// t>d 返回true
+// t<=d 返回false
+func (t LocalDateTime) After(d LocalDateTime) bool {
+	return t.ToGoTime().After(d.ToGoTime())
+}
+
+// Eq 相等
+// t==d 返回true
+// t!=d 返回false
+func (t LocalDateTime) Eq(d LocalDateTime) bool {
+	return t.ToGoTime() == d.ToGoTime()
+}
+
+// ----------------------- to ----------------------------
+
+func (t LocalDateTime) ToGoTime() time.Time {
+	return t.data
+}
+func (t LocalDateTime) ToDate() LocalDate {
+	return LocalDate{t.ToGoTime()}
+}
+func (t LocalDateTime) ToDateP() *LocalDate {
+	return &LocalDate{t.ToGoTime()}
+}
+
+// ----------------------- parse ----------------------------
+
+func LocalDateTimeParse(data string) (LocalDateTime, error) {
+	now, err := time.ParseInLocation(`2006-01-02 15:04:05`, data, time.Local)
+	return LocalDateTime{now}, err
+}
+func LocalDateTimeParseMust(data string) LocalDateTime {
+	localTime, err := LocalDateTimeParse(data)
+	if err != nil {
+		panic(err)
+	}
+	return localTime
+}
+
+func LocalDateTimeParseMustP(data string) *LocalDateTime {
+	localTime, err := LocalDateTimeParse(data)
+	if err != nil {
+		panic(err)
+	}
+	return &localTime
+}
+
+// ----------------------- json ----------------------------
+
+func (t LocalDateTime) MarshalJSON() ([]byte, error) {
+	tune := t.data.Format(`"2006-01-02 15:04:05"`)
 	return []byte(tune), nil
 }
 
-func (t *DateTime) UnmarshalJSON(data []byte) error {
+func (t *LocalDateTime) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
 		return nil
 	}
 	now, err := time.ParseInLocation(`"2006-01-02 15:04:05"`, string(data), time.Local)
-	*t = DateTime{Time: now}
+	*t = LocalDateTime{data: now}
 	return err
 }
 
+// ----------------------- db ----------------------------
+
 // Value insert timestamp into mysql need this function.
-func (t DateTime) Value() (driver.Value, error) {
-	var zeroTime time.Time
-	if t.Time.UnixNano() == zeroTime.UnixNano() {
-		return nil, nil
-	}
-	return t.Time, nil
+func (t LocalDateTime) Value() (driver.Value, error) {
+	return t.data, nil
 }
 
-// Scan valueof jstime.Time
-func (t *DateTime) Scan(v any) error {
+// Scan valueof jstime.LocalTime
+func (t *LocalDateTime) Scan(v any) error {
 	if v == nil {
 		return nil
 	}
@@ -65,12 +158,12 @@ func (t *DateTime) Scan(v any) error {
 	case []byte:
 		s = string(v)
 	case time.Time:
-		*t = DateTime{v}
-	case DateTime:
+		*t = LocalDateTimeOf(v)
+	case LocalDateTime:
 		*t = v
 		return nil
 	default:
-		return fmt.Errorf("can not convert %v to DateTime", v)
+		return fmt.Errorf("can not convert %v to LocalDateTime", v)
 	}
 	if len(s) < 19 {
 		return nil
@@ -79,20 +172,18 @@ func (t *DateTime) Scan(v any) error {
 	if err != nil {
 		return err
 	}
-	*t = DateTime{Time: now}
+	*t = LocalDateTime{data: now}
 	return nil
 }
 
-func (t DateTime) ToGoTime() time.Time {
-	return time.Unix(t.Unix(), 0)
-}
+// ----------------------- list ----------------------------
 
-type DateTimeList []DateTime
+type LocalDateTimeList []LocalDateTime
 
 // gorm 自定义结构需要实现 Value Scan 两个方法
 // Value 实现方法
-func (p DateTimeList) Value() (driver.Value, error) {
-	var k []DateTime
+func (p LocalDateTimeList) Value() (driver.Value, error) {
+	var k []LocalDateTime
 	k = p
 	marshal, err := json.Marshal(k)
 	if err != nil {
@@ -108,16 +199,16 @@ func (p DateTimeList) Value() (driver.Value, error) {
 }
 
 // Scan 实现方法
-func (p *DateTimeList) Scan(data any) error {
+func (p *LocalDateTimeList) Scan(data any) error {
 	array := pgtype.TimestampArray{}
 	err := array.Scan(data)
 	if err != nil {
 		return err
 	}
-	var list []DateTime
-	list = make([]DateTime, len(array.Elements))
+	var list []LocalDateTime
+	list = make([]LocalDateTime, len(array.Elements))
 	for i, element := range array.Elements {
-		list[i] = DateTime{element.Time}
+		list[i] = LocalDateTime{element.Time}
 	}
 	marshal, err := json.Marshal(list)
 	if err != nil {
@@ -125,76 +216,4 @@ func (p *DateTimeList) Scan(data any) error {
 	}
 	err = json.Unmarshal(marshal, &p)
 	return err
-}
-func (t DateTime) Add(d *DurationOption) DateTime {
-	if d == nil {
-		return t
-	}
-	return DateTime{t.AddDate(d.year, d.month, d.day).Add(
-		time.Duration(d.hour)*time.Hour +
-			time.Duration(d.min)*time.Minute +
-			time.Duration(d.sec)*time.Second +
-			time.Duration(d.nsec)*time.Nanosecond,
-	)}
-}
-
-// datetime
-type AutoDateTime struct {
-	time.Time
-}
-
-func (t AutoDateTime) MarshalJSON() ([]byte, error) {
-	var tune string
-	if t.Year() == 0 && t.Month() == time.January && t.Day() == 1 {
-		tune = t.Format(`"15:04:05"`)
-	} else {
-		tune = t.Format(`"2006-01-02"`)
-	}
-	return []byte(tune), nil
-}
-
-func (t *AutoDateTime) UnmarshalJSON(data []byte) error {
-	if string(data) == "null" {
-		return nil
-	}
-	now, err := time.ParseInLocation(`"2006-01-02 15:04:05"`, string(data), time.Local)
-	*t = AutoDateTime{Time: now}
-	return err
-}
-
-// Value insert timestamp into mysql need this function.
-func (t AutoDateTime) Value() (driver.Value, error) {
-	var zeroTime time.Time
-	if t.Time.UnixNano() == zeroTime.UnixNano() {
-		return nil, nil
-	}
-	return t.Time, nil
-}
-
-// Scan valueof jstime.Time
-func (t *AutoDateTime) Scan(v any) error {
-	var s = ""
-	switch v := v.(type) {
-	case string:
-		s = v[:8]
-	case []byte:
-		s = string(v)[:8]
-	case time.Time:
-		*t = AutoDateTime{v}
-	case Time:
-		*t = AutoDateTime{v.Time}
-	case Date:
-		*t = AutoDateTime{v.Time}
-	case AutoDateTime:
-		*t = v
-		return nil
-	default:
-		return fmt.Errorf("can not convert %v to types.AutoDateTime", v)
-	}
-	now, err := time.ParseInLocation(`2006-01-02 15:04:05`, s, time.Local)
-	if err != nil {
-		return err
-	}
-	*t = AutoDateTime{Time: now}
-	return nil
 }

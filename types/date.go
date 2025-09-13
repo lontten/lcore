@@ -4,108 +4,162 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"github.com/jackc/pgtype"
 	"time"
+
+	"github.com/jackc/pgtype"
 )
 
-// date
-type Date struct {
-	time.Time
+// LocalDate 本地时区日期
+type LocalDate struct {
+	data time.Time
 }
 
-func NowDate() Date {
-	return Date{time.Now()}
+// ----------------------- now ----------------------------
+
+// NowLocalDate 当前时间
+func NowLocalDate() LocalDate {
+	return LocalDate{time.Now()}
 }
 
-func NowDateP() *Date {
-	return &Date{time.Now()}
+func NowLocalDateP() *LocalDate {
+	return &LocalDate{time.Now()}
 }
-func DateOf(t time.Time) Date {
-	dateOnly := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
-	return Date{dateOnly}
+
+// ----------------------- of ----------------------------
+
+// LocalDateOf
+// v 可能是 任意时区，需要先转成 本地时区，然后再转成 LocalDate
+func LocalDateOf(v time.Time) LocalDate {
+	t := v.In(time.Local)
+	dateOnly := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
+	return LocalDate{dateOnly}
 }
-func DatePOf(t time.Time) *Date {
-	dateOnly := DateOf(t)
+func LocalDatePOf(t time.Time) *LocalDate {
+	dateOnly := LocalDateOf(t)
 	return &dateOnly
 }
-func DateOfYmd(year, month, day int) Date {
+func LocalDateOfYmd(year, month, day int) LocalDate {
 	dateOnly := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
-	return Date{dateOnly}
+	return LocalDate{dateOnly}
 }
-func DatePOfYmd(year, month, day int) *Date {
-	dateOnly := DateOfYmd(year, month, day)
+func LocalDatePOfYmd(year, month, day int) *LocalDate {
+	dateOnly := LocalDateOfYmd(year, month, day)
 	return &dateOnly
 }
-func (t Date) ToGoTime() time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
-}
-func (t Date) ToDateTime() DateTime {
-	return DateTime{t.ToGoTime()}
-}
-func (t Date) ToDateTimeP() *DateTime {
-	return &DateTime{t.ToGoTime()}
+
+// ----------------------- base ----------------------------
+
+func (t LocalDate) IsZero() bool {
+	return t.data.IsZero()
 }
 
-func (t Date) ToString() string {
-	return t.Format(`2006-01-02`)
+func (t LocalDate) String() string {
+	return t.data.Format(`2006-01-02`)
 }
+
+func (t LocalDate) Add(d *DurationOption) LocalDate {
+	if d == nil {
+		return t
+	}
+	return LocalDate{t.data.AddDate(d.year, d.month, d.day)}
+}
+func (d LocalDate) AddTime(t LocalTime) LocalDateTime {
+	return LocalDateTime{time.Date(
+		d.data.Year(),
+		d.data.Month(),
+		d.data.Day(),
+		t.data.Hour(),
+		t.data.Minute(),
+		t.data.Second(),
+		0, time.Local,
+	)}
+}
+
+// ----------------------- comp ----------------------------
 
 // Before
 // t<d 返回true
 // t>=d 返回false
-func (t Date) Before(d Date) bool {
+func (t LocalDate) Before(d LocalDate) bool {
 	return t.ToGoTime().Before(d.ToGoTime())
 }
 
 // After
 // t>d 返回true
 // t<=d 返回false
-func (t Date) After(d Date) bool {
+func (t LocalDate) After(d LocalDate) bool {
 	return t.ToGoTime().After(d.ToGoTime())
 }
 
-func (t Date) Add(d *DurationOption) Date {
-	if d == nil {
-		return t
-	}
-	return Date{t.AddDate(d.year, d.month, d.day)}
-}
-func (d Date) AddTime(t Time) DateTime {
-	return DateTime{time.Date(
-		d.Time.Year(),
-		d.Time.Month(),
-		d.Time.Day(),
-		t.Hour(),
-		t.Minute(),
-		t.Second(), 0, nil,
-	)}
+// Eq
+// t==d 返回true
+// t!=d 返回false
+func (t LocalDate) Eq(d LocalDate) bool {
+	return t.ToGoTime() == d.ToGoTime()
 }
 
-func (t Date) MarshalJSON() ([]byte, error) {
-	tune := t.Format(`"2006-01-02"`)
+// ----------------------- to ----------------------------
+
+func (t LocalDate) ToGoTime() time.Time {
+	return time.Date(t.data.Year(), t.data.Month(), t.data.Day(), 0, 0, 0, 0, time.Local)
+}
+func (t LocalDate) ToDateTime() LocalDateTime {
+	return LocalDateTime{t.ToGoTime()}
+}
+func (t LocalDate) ToDateTimeP() *LocalDateTime {
+	return &LocalDateTime{t.ToGoTime()}
+}
+
+// ----------------------- parse ----------------------------
+
+func LocalDateParse(data string) (LocalDate, error) {
+	now, err := time.ParseInLocation(`2006-01-02`, data, time.Local)
+	return LocalDate{now}, err
+}
+func LocalDateParseMust(data string) LocalDate {
+	localTime, err := LocalDateParse(data)
+	if err != nil {
+		panic(err)
+	}
+	return localTime
+}
+
+func LocalDateParseMustP(data string) *LocalDate {
+	localTime, err := LocalDateParse(data)
+	if err != nil {
+		panic(err)
+	}
+	return &localTime
+}
+
+// ----------------------- json ----------------------------
+
+func (t LocalDate) MarshalJSON() ([]byte, error) {
+	tune := t.data.Format(`"2006-01-02"`)
 	return []byte(tune), nil
 }
 
-func (t *Date) UnmarshalJSON(data []byte) error {
+func (t *LocalDate) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
 		return nil
 	}
 	now, err := time.ParseInLocation(`"2006-01-02"`, string(data), time.Local)
-	*t = Date{Time: now}
+	*t = LocalDate{data: now}
 	return err
 }
 
+// ----------------------- db ----------------------------
+
 // Value insert timestamp into mysql need this function.
-func (t Date) Value() (driver.Value, error) {
-	var zeroTime time.Time
-	if t.Time.UnixNano() == zeroTime.UnixNano() {
+func (t LocalDate) Value() (driver.Value, error) {
+	if t.IsZero() {
 		return nil, nil
 	}
-	return t.Format("2006-01-02"), nil
+	return t.data.Format("2006-01-02"), nil
 }
 
-// Scan valueof jstime.Time
-func (t *Date) Scan(v any) error {
+// Scan valueof jstime.LocalTime
+func (t *LocalDate) Scan(v any) error {
 	if v == nil {
 		return nil
 	}
@@ -116,12 +170,12 @@ func (t *Date) Scan(v any) error {
 	case []byte:
 		s = string(v)
 	case time.Time:
-		*t = Date{v}
-	case Date:
+		*t = LocalDateOf(v)
+	case LocalDate:
 		*t = v
 		return nil
 	default:
-		return fmt.Errorf("can not convert %v to Date", v)
+		return fmt.Errorf("can not convert %v to LocalDate", v)
 	}
 	if len(s) < 10 {
 		return nil
@@ -130,16 +184,18 @@ func (t *Date) Scan(v any) error {
 	if err != nil {
 		return err
 	}
-	*t = Date{Time: now}
+	*t = LocalDate{data: now}
 	return nil
 }
 
-type DateList []Date
+// ----------------------- list ----------------------------
+
+type LocalDateList []LocalDate
 
 // gorm 自定义结构需要实现 Value Scan 两个方法
 // Value 实现方法
-func (p DateList) Value() (driver.Value, error) {
-	var k []Date
+func (p LocalDateList) Value() (driver.Value, error) {
+	var k []LocalDate
 	k = p
 	marshal, err := json.Marshal(k)
 	if err != nil {
@@ -155,16 +211,16 @@ func (p DateList) Value() (driver.Value, error) {
 }
 
 // Scan 实现方法
-func (p *DateList) Scan(data any) error {
+func (p *LocalDateList) Scan(data any) error {
 	array := pgtype.TimestampArray{}
 	err := array.Scan(data)
 	if err != nil {
 		return err
 	}
-	var list []Date
-	list = make([]Date, len(array.Elements))
+	var list []LocalDate
+	list = make([]LocalDate, len(array.Elements))
 	for i, element := range array.Elements {
-		list[i] = Date{element.Time}
+		list[i] = LocalDateOf(element.Time)
 	}
 	marshal, err := json.Marshal(list)
 	if err != nil {

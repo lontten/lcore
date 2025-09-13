@@ -34,13 +34,10 @@ func (u *UUID) UnmarshalJSON(src []byte) error {
 	return err
 }
 
-// Value insert timestamp into mysql need this function.
-
 func (u UUID) Value() (driver.Value, error) {
 	return uuid.UUID(u).String(), nil
 }
 
-// Scan valueof time.Time
 func (u *UUID) Scan(v any) error {
 	value, ok := v.(string)
 	if ok {
