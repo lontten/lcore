@@ -17,12 +17,12 @@ type LocalDate struct {
 
 // ----------------------- now ----------------------------
 
-// NowLocalDate 当前时间
-func NowLocalDate() LocalDate {
+// NowDate 当前时间
+func NowDate() LocalDate {
 	return LocalDate{time.Now()}
 }
 
-func NowLocalDateP() *LocalDate {
+func NowDateP() *LocalDate {
 	return &LocalDate{time.Now()}
 }
 

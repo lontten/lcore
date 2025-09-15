@@ -18,11 +18,11 @@ type LocalTime struct {
 
 // ----------------------- now ----------------------------
 
-func NowLocalTime() LocalTime {
+func NowTime() LocalTime {
 	return LocalTime{time.Now()}
 }
 
-func NowLocalTimeP() *LocalTime {
+func NowTimeP() *LocalTime {
 	return &LocalTime{time.Now()}
 }
 
