@@ -1,4 +1,4 @@
-module github.com/lontten/lcore
+module github.com/lontten/lcore/v2
 
 go 1.24.0
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/lontten/lcore"
+	"github.com/lontten/lcore/v2"
 )
 
 func main() {
