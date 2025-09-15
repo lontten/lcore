@@ -1,6 +1,7 @@
 package lcutils
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -102,7 +103,11 @@ func TestBoolDiff(t *testing.T) {
 	as := assert.New(t)
 	as.Equal([]int{3}, BoolDiff([]int{1, 2, 3}, []int{1, 2}))
 	as.Equal([]int{1}, BoolDiff([]int{1, 2, 3}, []int{2, 3}))
-	as.Equal([]int{1, 2}, BoolDiff([]int{1, 2, 3}, []int{3}))
+
+	list := BoolDiff([]int{1, 2, 3}, []int{3})
+	sort.Ints(list)
+	as.Equal([]int{1, 2}, list)
+
 	as.Equal([]int{}, BoolDiff([]int{}, []int{1, 2, 3}))
 	as.Equal([]int{}, BoolDiff([]int{}, []int{}))
 	as.Equal([]int{}, BoolDiff([]int{1, 2, 3}, []int{1, 2, 3}))

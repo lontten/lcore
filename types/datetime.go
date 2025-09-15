@@ -10,6 +10,7 @@ import (
 )
 
 // LocalDateTime 本地时区 日期时间
+// 零值是 0001-01-01 00:00:00
 type LocalDateTime struct {
 	data time.Time
 }
@@ -28,13 +29,27 @@ func NowDateTimeP() *LocalDateTime {
 // ----------------------- of ----------------------------
 
 func LocalDateTimeOf(v time.Time) LocalDateTime {
-	t := v.In(time.Local)
-	return LocalDateTime{t}
+	dateOnly := time.Date(v.Year(), v.Month(), v.Day(), v.Hour(), v.Minute(), v.Second(), 0, time.Local)
+	return LocalDateTime{dateOnly}
 }
 func LocalDateTimePOf(v time.Time) *LocalDateTime {
 	dateOnly := LocalDateTimeOf(v)
 	return &dateOnly
 }
+
+// ----------------------- of Loc----------------------------
+
+func LocalDateTimeOfLoc(v time.Time) LocalDateTime {
+	t := v.In(time.Local)
+	return LocalDateTime{t}
+}
+func LocalDateTimePOfLoc(v time.Time) *LocalDateTime {
+	dateOnly := LocalDateTimeOfLoc(v)
+	return &dateOnly
+}
+
+// ----------------------- of YmdHms----------------------------
+
 func LocalDateTimeOfYmdHms(year, month, day, hour, min, sec int) LocalDateTime {
 	dateOnly := time.Date(year, time.Month(month), day, hour, min, sec, 0, time.Local)
 	return LocalDateTime{dateOnly}
@@ -45,13 +60,11 @@ func LocalDateTimePOfYmdHms(year, month, day, hour, min, sec int) *LocalDateTime
 }
 
 // ----------------------- base ----------------------------
-
-func (t LocalDateTime) IsZero() bool {
-	return t.data.IsZero()
-}
-
 func (t LocalDateTime) String() string {
 	return t.data.Format(`2006-01-02 15:04:05`)
+}
+func (t LocalDateTime) IsZero() bool {
+	return t.String() == "0001-01-01 00:00:00"
 }
 
 func (t LocalDateTime) Add(d *DurationOption) LocalDateTime {
@@ -104,8 +117,8 @@ func (t LocalDateTime) ToDateP() *LocalDate {
 // ----------------------- parse ----------------------------
 
 func LocalDateTimeParse(data string) (LocalDateTime, error) {
-	now, err := time.ParseInLocation(`2006-01-02 15:04:05`, data, time.Local)
-	return LocalDateTime{now}, err
+	localTime, err := time.ParseInLocation(`2006-01-02 15:04:05`, data, time.Local)
+	return LocalDateTime{localTime}, err
 }
 func LocalDateTimeParseMust(data string) LocalDateTime {
 	localTime, err := LocalDateTimeParse(data)
@@ -134,8 +147,8 @@ func (t *LocalDateTime) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
 		return nil
 	}
-	now, err := time.ParseInLocation(`"2006-01-02 15:04:05"`, string(data), time.Local)
-	*t = LocalDateTime{data: now}
+	localTime, err := time.ParseInLocation(`"2006-01-02 15:04:05"`, string(data), time.Local)
+	*t = LocalDateTime{data: localTime}
 	return err
 }
 
@@ -159,6 +172,7 @@ func (t *LocalDateTime) Scan(v any) error {
 		s = string(v)
 	case time.Time:
 		*t = LocalDateTimeOf(v)
+		return nil
 	case LocalDateTime:
 		*t = v
 		return nil
@@ -166,13 +180,13 @@ func (t *LocalDateTime) Scan(v any) error {
 		return fmt.Errorf("can not convert %v to LocalDateTime", v)
 	}
 	if len(s) < 19 {
-		return nil
+		return fmt.Errorf("can not convert %v to LocalDateTime", v)
 	}
-	now, err := time.ParseInLocation(`2006-01-02 15:04:05`, s, time.Local)
+	localTime, err := time.ParseInLocation(`2006-01-02 15:04:05`, s, time.Local)
 	if err != nil {
 		return err
 	}
-	*t = LocalDateTime{data: now}
+	*t = LocalDateTime{data: localTime}
 	return nil
 }
 
@@ -180,7 +194,6 @@ func (t *LocalDateTime) Scan(v any) error {
 
 type LocalDateTimeList []LocalDateTime
 
-// gorm 自定义结构需要实现 Value Scan 两个方法
 // Value 实现方法
 func (p LocalDateTimeList) Value() (driver.Value, error) {
 	var k []LocalDateTime
@@ -201,19 +214,13 @@ func (p LocalDateTimeList) Value() (driver.Value, error) {
 // Scan 实现方法
 func (p *LocalDateTimeList) Scan(data any) error {
 	array := pgtype.TimestampArray{}
-	err := array.Scan(data)
-	if err != nil {
+	if err := array.Scan(data); err != nil {
 		return err
 	}
-	var list []LocalDateTime
-	list = make([]LocalDateTime, len(array.Elements))
+	list := make([]LocalDateTime, len(array.Elements))
 	for i, element := range array.Elements {
-		list[i] = LocalDateTime{element.Time}
+		list[i] = LocalDateTimeOf(element.Time)
 	}
-	marshal, err := json.Marshal(list)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(marshal, &p)
-	return err
+	*p = list
+	return nil
 }

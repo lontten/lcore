@@ -2,14 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/lontten/lcore"
 	"time"
+
+	"github.com/lontten/lcore"
 )
 
 func main() {
 	line()
 }
 func line() {
+
 	for range 22 {
 		// 创建一个协程池，最大协程数为 3，任务队列大小为 5，使用 CallerRunsPolicy 拒绝策略
 		pool := lcore.NewPool(10, 22, lcore.CallerRunsPolicy)

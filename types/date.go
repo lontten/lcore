@@ -10,6 +10,7 @@ import (
 )
 
 // LocalDate 本地时区日期
+// 零值是 0001-01-01 00:00:00
 type LocalDate struct {
 	data time.Time
 }
@@ -27,17 +28,28 @@ func NowLocalDateP() *LocalDate {
 
 // ----------------------- of ----------------------------
 
-// LocalDateOf
-// v 可能是 任意时区，需要先转成 本地时区，然后再转成 LocalDate
 func LocalDateOf(v time.Time) LocalDate {
-	t := v.In(time.Local)
-	dateOnly := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
+	dateOnly := time.Date(v.Year(), v.Month(), v.Day(), 0, 0, 0, 0, time.Local)
 	return LocalDate{dateOnly}
 }
 func LocalDatePOf(t time.Time) *LocalDate {
 	dateOnly := LocalDateOf(t)
 	return &dateOnly
 }
+
+// ----------------------- of Loc----------------------------
+
+func LocalDateOfLoc(v time.Time) LocalDate {
+	t := v.In(time.Local)
+	dateOnly := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
+	return LocalDate{dateOnly}
+}
+func LocalDatePOfLoc(t time.Time) *LocalDate {
+	dateOnly := LocalDateOfLoc(t)
+	return &dateOnly
+}
+
+// ----------------------- of Ymd ----------------------------
 func LocalDateOfYmd(year, month, day int) LocalDate {
 	dateOnly := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
 	return LocalDate{dateOnly}
@@ -48,13 +60,11 @@ func LocalDatePOfYmd(year, month, day int) *LocalDate {
 }
 
 // ----------------------- base ----------------------------
-
-func (t LocalDate) IsZero() bool {
-	return t.data.IsZero()
-}
-
 func (t LocalDate) String() string {
 	return t.data.Format(`2006-01-02`)
+}
+func (t LocalDate) IsZero() bool {
+	return t.String() == "0001-01-01"
 }
 
 func (t LocalDate) Add(d *DurationOption) LocalDate {
@@ -113,8 +123,8 @@ func (t LocalDate) ToDateTimeP() *LocalDateTime {
 // ----------------------- parse ----------------------------
 
 func LocalDateParse(data string) (LocalDate, error) {
-	now, err := time.ParseInLocation(`2006-01-02`, data, time.Local)
-	return LocalDate{now}, err
+	localTime, err := time.ParseInLocation(`2006-01-02`, data, time.Local)
+	return LocalDate{localTime}, err
 }
 func LocalDateParseMust(data string) LocalDate {
 	localTime, err := LocalDateParse(data)
@@ -143,22 +153,17 @@ func (t *LocalDate) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
 		return nil
 	}
-	now, err := time.ParseInLocation(`"2006-01-02"`, string(data), time.Local)
-	*t = LocalDate{data: now}
+	localTime, err := time.ParseInLocation(`"2006-01-02"`, string(data), time.Local)
+	*t = LocalDate{data: localTime}
 	return err
 }
 
 // ----------------------- db ----------------------------
 
-// Value insert timestamp into mysql need this function.
 func (t LocalDate) Value() (driver.Value, error) {
-	if t.IsZero() {
-		return nil, nil
-	}
 	return t.data.Format("2006-01-02"), nil
 }
 
-// Scan valueof jstime.LocalTime
 func (t *LocalDate) Scan(v any) error {
 	if v == nil {
 		return nil
@@ -171,6 +176,7 @@ func (t *LocalDate) Scan(v any) error {
 		s = string(v)
 	case time.Time:
 		*t = LocalDateOf(v)
+		return nil
 	case LocalDate:
 		*t = v
 		return nil
@@ -178,13 +184,13 @@ func (t *LocalDate) Scan(v any) error {
 		return fmt.Errorf("can not convert %v to LocalDate", v)
 	}
 	if len(s) < 10 {
-		return nil
+		return fmt.Errorf("can not convert %v to LocalDate", v)
 	}
-	now, err := time.ParseInLocation(`2006-01-02`, s[:10], time.Local)
+	localTime, err := time.ParseInLocation(`2006-01-02`, s[:10], time.Local)
 	if err != nil {
 		return err
 	}
-	*t = LocalDate{data: now}
+	*t = LocalDate{data: localTime}
 	return nil
 }
 
@@ -192,7 +198,6 @@ func (t *LocalDate) Scan(v any) error {
 
 type LocalDateList []LocalDate
 
-// gorm 自定义结构需要实现 Value Scan 两个方法
 // Value 实现方法
 func (p LocalDateList) Value() (driver.Value, error) {
 	var k []LocalDate
@@ -212,20 +217,14 @@ func (p LocalDateList) Value() (driver.Value, error) {
 
 // Scan 实现方法
 func (p *LocalDateList) Scan(data any) error {
-	array := pgtype.TimestampArray{}
-	err := array.Scan(data)
-	if err != nil {
+	array := pgtype.DateArray{}
+	if err := array.Scan(data); err != nil {
 		return err
 	}
-	var list []LocalDate
-	list = make([]LocalDate, len(array.Elements))
+	list := make([]LocalDate, len(array.Elements))
 	for i, element := range array.Elements {
 		list[i] = LocalDateOf(element.Time)
 	}
-	marshal, err := json.Marshal(list)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(marshal, &p)
-	return err
+	*p = list
+	return nil
 }

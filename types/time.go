@@ -11,9 +11,7 @@ import (
 
 // LocalTime 本地时间
 // 零值是 0001-01-01 00:00:00
-// 有效数值是 0000-01-01 xx:xx:xx
-// "00:00:00" 转成 LocalTime 是 0000-01-01 00:00:00，和time零值 0001-01-01 00:00:00不同
-// 只要确保 在 非默认值零值时，和 time零值 0001-01-01 00:00:00不同，即可
+
 type LocalTime struct {
 	data time.Time
 }
@@ -31,16 +29,30 @@ func NowLocalTimeP() *LocalTime {
 // ----------------------- of ----------------------------
 
 func LocalTimeOf(v time.Time) LocalTime {
-	t := v.In(time.Local)
-	timeOnly := time.Date(0, time.January, 1, t.Hour(), t.Minute(), t.Second(), 0, time.Local)
+	timeOnly := time.Date(1, time.January, 1, v.Hour(), v.Minute(), v.Second(), 0, time.Local)
 	return LocalTime{timeOnly}
 }
 func LocalTimePOf(t time.Time) *LocalTime {
 	timeOnly := LocalTimeOf(t)
 	return &timeOnly
 }
+
+// ----------------------- of Loc----------------------------
+
+func LocalTimeOfLoc(v time.Time) LocalTime {
+	t := v.In(time.Local)
+	timeOnly := time.Date(1, time.January, 1, t.Hour(), t.Minute(), t.Second(), 0, time.Local)
+	return LocalTime{timeOnly}
+}
+func LocalTimePOfLoc(t time.Time) *LocalTime {
+	timeOnly := LocalTimeOfLoc(t)
+	return &timeOnly
+}
+
+// ----------------------- of Hms----------------------------
+
 func LocalTimeOfHms(hour, min, sec int) LocalTime {
-	timeOnly := time.Date(0, time.January, 1, hour, min, sec, 0, time.Local)
+	timeOnly := time.Date(1, time.January, 1, hour, min, sec, 0, time.Local)
 	return LocalTime{timeOnly}
 }
 func LocalTimePOfHms(hour, min, sec int) *LocalTime {
@@ -49,13 +61,11 @@ func LocalTimePOfHms(hour, min, sec int) *LocalTime {
 }
 
 // ----------------------- base ----------------------------
-
-func (t LocalTime) IsZero() bool {
-	return t.data.IsZero()
-}
-
 func (t LocalTime) String() string {
 	return t.data.Format(`15:04:05`)
+}
+func (t LocalTime) IsZero() bool {
+	return t.String() == "00:00:00"
 }
 
 func (t LocalTime) Add(d *DurationOption) LocalTime {
@@ -106,7 +116,7 @@ func (t LocalTime) Eq(d LocalTime) bool {
 
 // ----------------------- to ----------------------------
 func (t LocalTime) ToGoTime() time.Time {
-	return time.Date(0, time.January, 1, t.data.Hour(), t.data.Minute(), t.data.Second(), 0, time.Local)
+	return time.Date(1, time.January, 1, t.data.Hour(), t.data.Minute(), t.data.Second(), 0, time.Local)
 }
 func (t LocalTime) ToLocalDateTime() LocalDateTime {
 	return LocalDateTime{t.ToGoTime()}
@@ -117,10 +127,9 @@ func (t LocalTime) ToLocalDateTimeP() *LocalDateTime {
 
 // ----------------------- parse ----------------------------
 
-// LocalTimeParse 解析结果为 0年1月1日 00:00:00，和time零值的 1年1月1日 00:00:00不同
 func LocalTimeParse(data string) (LocalTime, error) {
-	now, err := time.ParseInLocation(`15:04:05`, data, time.Local)
-	return LocalTime{now}, err
+	localTime, err := time.ParseInLocation(`15:04:05`, data, time.Local)
+	return LocalTimeOf(localTime), err
 }
 func LocalTimeParseMust(data string) LocalTime {
 	localTime, err := LocalTimeParse(data)
@@ -149,17 +158,14 @@ func (t *LocalTime) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
 		return nil
 	}
-	now, err := time.ParseInLocation(`"15:04:05"`, string(data), time.Local)
-	*t = LocalTime{now}
+	localTime, err := time.ParseInLocation(`"15:04:05"`, string(data), time.Local)
+	*t = LocalTimeOf(localTime)
 	return err
 }
 
 // ----------------------- db ----------------------------
 
 func (t LocalTime) Value() (driver.Value, error) {
-	if t.IsZero() {
-		return nil, nil
-	}
 	return t.data.Format("15:04:05"), nil
 }
 
@@ -175,6 +181,7 @@ func (t *LocalTime) Scan(v any) error {
 		s = string(v)
 	case time.Time:
 		*t = LocalTimeOf(v)
+		return nil
 	case LocalTime:
 		*t = v
 		return nil
@@ -182,13 +189,13 @@ func (t *LocalTime) Scan(v any) error {
 		return fmt.Errorf("can not convert %v to LocalTime", v)
 	}
 	if len(s) < 8 {
-		return nil
+		return fmt.Errorf("can not convert %v to LocalTime", v)
 	}
-	now, err := time.ParseInLocation(`15:04:05`, s[len(s)-8:], time.Local)
+	localTime, err := time.ParseInLocation(`15:04:05`, s[len(s)-8:], time.Local)
 	if err != nil {
 		return err
 	}
-	*t = LocalTime{data: now}
+	*t = LocalTimeOf(localTime)
 	return nil
 }
 
@@ -196,7 +203,6 @@ func (t *LocalTime) Scan(v any) error {
 
 type LocalTimeList []LocalTime
 
-// gorm 自定义结构需要实现 Value Scan 两个方法
 // Value 实现方法
 func (p LocalTimeList) Value() (driver.Value, error) {
 	var k []LocalTime
@@ -216,20 +222,14 @@ func (p LocalTimeList) Value() (driver.Value, error) {
 
 // Scan 实现方法
 func (p *LocalTimeList) Scan(data any) error {
-	array := pgtype.TimestampArray{}
-	err := array.Scan(data)
-	if err != nil {
+	array := pgtype.VarcharArray{}
+	if err := array.Scan(data); err != nil {
 		return err
 	}
-	var list []LocalTime
-	list = make([]LocalTime, len(array.Elements))
+	list := make([]LocalTime, len(array.Elements))
 	for i, element := range array.Elements {
-		list[i] = LocalTimeOf(element.Time)
+		list[i] = LocalTimeParseMust(element.String)
 	}
-	marshal, err := json.Marshal(list)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(marshal, &p)
-	return err
+	*p = list
+	return nil
 }
