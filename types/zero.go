@@ -1,4 +1,4 @@
-package lcutils
+package types
 
 // nil 返回 零值
 func NilToZero[T any](t *T) T {

@@ -11,11 +11,11 @@ var reservedChars = map[rune]struct{}{
 	')': {}, '*': {}, '+': {}, ',': {}, ';': {}, '=': {},
 }
 
-func SanitizeFileName4URL(url string) string {
+func SafeFileNameForURL(filename string) string {
 	var sb strings.Builder
-	sb.Grow(len(url)) // 预分配内存提高效率
+	sb.Grow(len(filename)) // 预分配内存提高效率
 
-	for _, c := range url {
+	for _, c := range filename {
 		if _, ok := reservedChars[c]; ok {
 			sb.WriteByte('_')
 		} else {
