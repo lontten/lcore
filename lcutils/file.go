@@ -8,8 +8,10 @@ import (
 	"strings"
 )
 
-// 生成唯一临时文件名（返回路径和错误）
-func NewTempFileName(suffix string) (string, error) {
+// NewTempFileReturnPath 生成唯一临时文件名（返回路径和错误）
+// suffix 可以是 .xxx 或者 xxx.xxx
+// 建议有后缀名
+func NewTempFileReturnPath(suffix string) (string, error) {
 	// 在系统临时目录创建文件，文件名格式：temp_随机数+suffix
 	file, err := os.CreateTemp("", "temp_*"+suffix)
 	if err != nil {
@@ -25,22 +27,28 @@ func NewTempFileName(suffix string) (string, error) {
 	return path, nil
 }
 
-// 强制生成临时文件名（失败时panic）
-func NewTempFileNameMust(suffix string) string {
-	path, err := NewTempFileName(suffix)
+// NewTempFileReturnPathMust 强制生成临时文件名（失败时panic）
+// suffix 可以是 .xxx 或者 xxx.xxx
+// 建议有后缀名
+func NewTempFileReturnPathMust(suffix string) string {
+	path, err := NewTempFileReturnPath(suffix)
 	if err != nil {
 		panic(err)
 	}
 	return path
 }
 
-// 生成唯一临时文件（返回文件对象和错误）
+// NewTempFile 生成唯一临时文件（返回文件对象和错误）
+// suffix 可以是 .xxx 或者 xxx.xxx
+// 建议有后缀名
 func NewTempFile(suffix string) (*os.File, error) {
 	// 直接返回已打开的文件句柄
 	return os.CreateTemp("", "temp_*"+suffix)
 }
 
-// 强制生成临时文件（失败时panic）
+// NewTempFileMust 强制生成临时文件（失败时panic）
+// suffix 可以是 .xxx 或者 xxx.xxx
+// 建议有后缀名
 func NewTempFileMust(suffix string) *os.File {
 	file, err := NewTempFile(suffix)
 	if err != nil {
@@ -49,8 +57,8 @@ func NewTempFileMust(suffix string) *os.File {
 	return file
 }
 
-// 生成唯一临时目录名（返回目录路径和错误）
-func NewTempDirName() (string, error) {
+// NewTempReturnDirName 生成唯一临时目录名（返回目录路径和错误）
+func NewTempReturnDirName() (string, error) {
 	dir, err := os.MkdirTemp("", "tempdir_")
 	if err != nil {
 		return "", err
@@ -58,23 +66,23 @@ func NewTempDirName() (string, error) {
 	return dir, nil
 }
 
-// 生成唯一临时目录名（必须成功，失败时 panic）
-func NewTempDirNameMust() string {
-	dir, err := NewTempDirName()
+// NewTempReturnDirNameMust 生成唯一临时目录名（必须成功，失败时 panic）
+func NewTempReturnDirNameMust() string {
+	dir, err := NewTempReturnDirName()
 	if err != nil {
 		panic(err) // 若创建失败则触发 panic
 	}
 	return dir
 }
 
-func CopyFile(src, dst string) error {
-	srcFile, err := os.Open(src)
+func CopyFile(srcPath, dstPath string) error {
+	srcFile, err := os.Open(srcPath)
 	if err != nil {
 		return err
 	}
 	defer srcFile.Close()
 
-	dstFile, err := os.Create(dst)
+	dstFile, err := os.Create(dstPath)
 	if err != nil {
 		return err
 	}
@@ -84,8 +92,8 @@ func CopyFile(src, dst string) error {
 	return err
 }
 
-// CopyTemplateToTempFileName 复制模板文件到临时文件，返回临时文件路径
-func CopyTemplateToTempFileName(templatePath string) (string, error) {
+// CopyTemplateToTempFileReturnPath 复制模板文件到临时文件，返回临时文件路径
+func CopyTemplateToTempFileReturnPath(templatePath string) (string, error) {
 	tmpFile, err := CopyTemplateToTempFile(templatePath)
 	if err != nil {
 		return "", err
@@ -137,14 +145,17 @@ func CopyTemplateToTempFile(templatePath string) (tmpFile *os.File, err error) {
 	return
 }
 
+// GetFileName 获取文件名(包含扩展名)
 func GetFileName(path string) string {
 	return filepath.Base(path)
 }
+
+// GetFileNameNoSuffix 获取文件名(不包含扩展名)
 func GetFileNameNoSuffix(path string) string {
 	return strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 }
 
-// 获取文件后缀,不带点
+// GetFileSuffix 获取文件后缀(不带点)
 func GetFileSuffix(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
 }
