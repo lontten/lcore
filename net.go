@@ -9,7 +9,17 @@ import (
 	"net/url"
 )
 
-func Get[T any](url string) (int, T, error) {
+func Get[T any](url string) (T, error) {
+	statusCode, result, err := GetBase[T](url)
+	if err != nil {
+		return result, err
+	}
+	if statusCode != http.StatusOK {
+		return result, fmt.Errorf("请求失败，状态码: %d", statusCode)
+	}
+	return result, nil
+}
+func GetBase[T any](url string) (int, T, error) {
 	var result T
 	resp, err := http.Get(url)
 	if err != nil {
@@ -33,7 +43,17 @@ func Get[T any](url string) (int, T, error) {
 	}
 	return 0, result, nil
 }
-func PostJson[T any](url string, data any) (int, T, error) {
+func PostJson[T any](url string, data any) (T, error) {
+	statusCode, result, err := PostJsonBase[T](url, data)
+	if err != nil {
+		return result, err
+	}
+	if statusCode != http.StatusOK {
+		return result, fmt.Errorf("请求失败，状态码: %d", statusCode)
+	}
+	return result, nil
+}
+func PostJsonBase[T any](url string, data any) (int, T, error) {
 	var result T
 
 	jsonBody, err := json.Marshal(data)
@@ -64,7 +84,17 @@ func PostJson[T any](url string, data any) (int, T, error) {
 	return resp.StatusCode, result, nil
 }
 
-func PostForm[T any](url string, data url.Values) (int, T, error) {
+func PostForm[T any](url string, data url.Values) (T, error) {
+	statusCode, result, err := PostFormBase[T](url, data)
+	if err != nil {
+		return result, err
+	}
+	if statusCode != http.StatusOK {
+		return result, fmt.Errorf("请求失败，状态码: %d", statusCode)
+	}
+	return result, nil
+}
+func PostFormBase[T any](url string, data url.Values) (int, T, error) {
 	var result T
 
 	resp, err := http.PostForm(url, data)
