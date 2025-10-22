@@ -1,13 +1,13 @@
-package lcutils
+package codeutil
 
 import (
 	"crypto/rand"
 	"time"
 )
 
-// GenerateOrderID32
+// GenOrderID32
 // 格式 yyyymmddHHMMSS + 18位随机数,有字母
-func GenerateOrderID32() string {
+func GenOrderID32() string {
 	const charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	timestamp := time.Now().Format("20060102150405")
 
@@ -22,9 +22,9 @@ func GenerateOrderID32() string {
 	return timestamp + string(randomBytes)
 }
 
-// GenerateOrderID32Number
+// GenOrderID32Number
 // 格式 yyyymmddHHMMSS + 18位随机数, 纯数字
-func GenerateOrderID32Number() string {
+func GenOrderID32Number() string {
 	// 时间部分 (14位)
 	timestamp := time.Now().Format("20060102150405")
 

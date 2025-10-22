@@ -1,6 +1,9 @@
 package lcutils
 
-import "strings"
+import (
+	"strings"
+	"unicode"
+)
 
 func HasText(s string) bool {
 	s = strings.TrimSpace(s)
@@ -51,4 +54,12 @@ func LastStrRight(str string, key string) string {
 	}
 	start := index + len(key)
 	return str[start:]
+}
+
+// 首字母小写
+func LowerFirst(str string) string {
+	for i, v := range str {
+		return string(unicode.ToLower(v)) + str[i+1:]
+	}
+	return ""
 }

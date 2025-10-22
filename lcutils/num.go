@@ -10,6 +10,10 @@ import "golang.org/x/exp/constraints"
 func Num2Str[T constraints.Integer](num T) string {
 	return fmt.Sprintf("%d", num)
 }
+func Num2StrP[T constraints.Integer](num T) *string {
+	var s = Num2Str(num)
+	return &s
+}
 
 // Str2Num 将字符串转换为int64数值，支持任意进制解析
 func Str2Num(str string) (int64, error) {
@@ -22,4 +26,9 @@ func Str2NumMust(str string) int64 {
 		panic(err)
 	}
 	return num
+}
+
+func Str2NumMustP(str string) *int64 {
+	num := Str2NumMust(str)
+	return &num
 }
