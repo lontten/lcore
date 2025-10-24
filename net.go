@@ -41,7 +41,7 @@ func GetBase[T any](targetURL string) (int, T, error) {
 	if err != nil {
 		return 0, result, fmt.Errorf("响应体 JSON 反序列化失败: %w", err)
 	}
-	return 0, result, nil
+	return resp.StatusCode, result, nil
 }
 func PostJson[T any](targetURL string, data any) (T, error) {
 	statusCode, result, err := PostJsonBase[T](targetURL, data)
