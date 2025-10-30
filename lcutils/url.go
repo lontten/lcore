@@ -27,7 +27,6 @@ func SanitizeFileName4URL(url string, size ...int) string {
 
 	s := sb.String()
 	s = CleanString(s)
-	s = processUnderscoresOptimized(s)
 	runes := []rune(s)
 	l := 0
 	if len(size) > 0 {
@@ -57,49 +56,4 @@ func CleanString(s string) string {
 func isInvisibleControlCharacter(r rune) bool {
 	// 控制字符的 Unicode 范围是 0x0000 到 0x001F 和 0x007F 到 0x009F
 	return (r >= 0x0000 && r <= 0x001F) || (r >= 0x007F && r <= 0x009F)
-}
-
-func processUnderscoresOptimized(s string) string {
-	if s == "" {
-		return s
-	}
-
-	runes := []rune(s)
-	var builder strings.Builder
-
-	// 找到第一个非下划线字符的位置
-	start := 0
-	for start < len(runes) && runes[start] == '_' {
-		start++
-	}
-
-	// 找到最后一个非下划线字符的位置
-	end := len(runes) - 1
-	for end >= 0 && runes[end] == '_' {
-		end--
-	}
-
-	if start > end {
-		return ""
-	}
-
-	// 处理中间部分
-	for i := start; i <= end; i++ {
-		current := runes[i]
-
-		if current == '_' {
-			// 只有当上一个字符不是下划线时才添加
-			if builder.Len() == 0 || runes[i-1] != '_' {
-				builder.WriteRune('_')
-			}
-			// 跳过所有连续的下划线
-			for i+1 <= end && runes[i+1] == '_' {
-				i++
-			}
-		} else {
-			builder.WriteRune(current)
-		}
-	}
-
-	return builder.String()
 }
