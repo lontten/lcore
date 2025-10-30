@@ -1,6 +1,7 @@
 package codeutil
 
 import (
+	"crypto/md5"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
@@ -24,4 +25,13 @@ func Base64Encode(str string) string {
 func Base64Decode(str string) (string, error) {
 	decodeBytes, err := base64.StdEncoding.DecodeString(str)
 	return string(decodeBytes), err
+}
+func Md5(str string) string {
+	data := []byte(str)
+
+	// 2. 计算MD5哈希（返回16字节的哈希值）
+	hashBytes := md5.Sum(data)
+
+	// 3. 转换为32位十六进制字符串（小写）
+	return hex.EncodeToString(hashBytes[:])
 }
