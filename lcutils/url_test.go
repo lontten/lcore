@@ -1,6 +1,9 @@
 package lcutils
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestSanitizeURL(t *testing.T) {
 	type args struct {
@@ -25,5 +28,42 @@ func TestSanitizeURL(t *testing.T) {
 				t.Errorf("SanitizeURL() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestProcessUnderscoresOptimized(t *testing.T) {
+	// 测试用例
+	testCases := []string{
+		"_hello_world_",
+		"__test___string__",
+		"___multiple___underscores___",
+		"no_underscores",
+		"___",
+		"",
+		"_single_",
+		"start_",
+		"_end",
+		"normal_string",
+		"normal_string ",
+		"normal_string  ",
+		" normal_string",
+		"  normal_string",
+		"  normal_  str ing",
+		"  nor   mal_  str ing",
+		"  nor   mal_  \tstr ing",
+		"  nor   mal_  \t\nstr ing",
+		"  nor   mal_  \t\n\rstr ing",
+		"a__b___c____d",
+		"___开头_中间___结尾___",
+	}
+
+	fmt.Println("处理结果:")
+	fmt.Println("=  * 50")
+
+	for _, test := range testCases {
+		result := SanitizeFileName4URL(test)
+		fmt.Printf("输入: %-30s -> 输出: %-30s\n",
+			fmt.Sprintf("\"%s\"", test),
+			fmt.Sprintf("\"%s\"", result))
 	}
 }
