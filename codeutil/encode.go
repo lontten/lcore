@@ -26,7 +26,7 @@ func Base64Decode(str string) (string, error) {
 	decodeBytes, err := base64.StdEncoding.DecodeString(str)
 	return string(decodeBytes), err
 }
-func Md5(str string) string {
+func MD5(str string) string {
 	data := []byte(str)
 
 	// 2. 计算MD5哈希（返回16字节的哈希值）

@@ -1,4 +1,4 @@
-package lcutils
+package netutil
 
 import (
 	"strings"

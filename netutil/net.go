@@ -1,4 +1,4 @@
-package lcore
+package netutil
 
 import (
 	"bytes"
