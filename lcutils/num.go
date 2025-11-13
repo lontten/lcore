@@ -18,12 +18,16 @@ func Num2StrP[T constraints.Integer](num T) *string {
 // Str2Num 将字符串转换为int64数值，支持任意进制解析
 func Str2Num(str string) (int64, error) {
 	// 自动识别进制（0b/0o/0x前缀，否则十进制）
-	return strconv.ParseInt(str, 0, 64)
+	parseInt, err := strconv.ParseInt(str, 0, 64)
+	if err != nil {
+		return 0, fmt.Errorf("无法将字符串%s转换为整数: %w", str, err)
+	}
+	return parseInt, nil
 }
 func Str2NumMust(str string) int64 {
 	num, err := Str2Num(str)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("无法将字符串%s转换为整数: %w", str, err))
 	}
 	return num
 }
