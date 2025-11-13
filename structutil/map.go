@@ -5,17 +5,12 @@ import (
 	"reflect"
 )
 
-func Struct2StringMap(s any) (map[string]string, error) {
+func Struct2StringMap(s any) map[string]string {
 	val := reflect.ValueOf(s)
 
 	// 解引用指针（支持结构体指针输入）
 	for val.Kind() == reflect.Ptr {
 		val = val.Elem()
-	}
-
-	// 校验输入是否为结构体
-	if val.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("input is not a struct (got %s)", val.Kind())
 	}
 
 	relType := val.Type()
@@ -47,5 +42,5 @@ func Struct2StringMap(s any) (map[string]string, error) {
 		m[field.Name] = strVal
 	}
 
-	return m, nil
+	return m
 }
