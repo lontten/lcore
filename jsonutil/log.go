@@ -1,11 +1,11 @@
-package lcutils
+package jsonutil
 
 import (
 	"encoding/json"
 	"fmt"
 )
 
-func LogJson(v ...any) {
+func Log(v ...any) {
 	for _, a := range v {
 		bytes, err := json.Marshal(a)
 		if err != nil {
