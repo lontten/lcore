@@ -1,4 +1,4 @@
-package jsonutil
+package logutil
 
 import (
 	"encoding/json"
