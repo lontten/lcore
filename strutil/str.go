@@ -1,4 +1,4 @@
-package lcutils
+package strutil
 
 import (
 	"strings"
