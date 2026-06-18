@@ -1,6 +1,6 @@
 module github.com/lontten/lcore/v2
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/gofrs/uuid v4.4.0+incompatible
@@ -8,7 +8,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/exp v0.0.0-20260112195511-716be5621a96
+	golang.org/x/exp v0.0.0-20260611194520-c48552f49976
 )
 
 require (
