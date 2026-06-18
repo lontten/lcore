@@ -74,15 +74,10 @@ func (t LocalDate) Add(d *DurationOption) LocalDate {
 	return LocalDate{t.data.AddDate(d.year, d.month, d.day)}
 }
 func (d LocalDate) AddTime(t LocalTime) LocalDateTime {
-	return LocalDateTime{time.Date(
-		d.data.Year(),
-		d.data.Month(),
-		d.data.Day(),
-		t.data.Hour(),
-		t.data.Minute(),
-		t.data.Second(),
-		0, time.Local,
-	)}
+	return LocalDateTimeOfYmdHms(
+		d.data.Year(), int(d.data.Month()), d.data.Day(),
+		t.hour, t.minute, t.second,
+	)
 }
 
 // ----------------------- comp ----------------------------

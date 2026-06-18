@@ -6,6 +6,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestLocalDate(t *testing.T) {
+	as := assert.New(t)
+
+	as.True(LocalDateParseMust("0001-01-01").IsZero())
+	as.True(LocalDate{}.IsZero())
+}
+
 func TestLocalDateList_Scan3(t *testing.T) {
 	as := assert.New(t)
 	var l = make([]LocalDate, 0)
