@@ -256,3 +256,16 @@ func TestLocalTimeList_ScanPgLiteral(t *testing.T) {
 	as.Equal(LocalTime{}, list[0])
 	as.Equal(LocalTimeOfHms(0, 0, 1), list[1])
 }
+
+func TestLocalTimeList_ScanInvalid(t *testing.T) {
+	as := assert.New(t)
+	var list LocalTimeList
+	as.Error(list.Scan(123))
+}
+
+func TestLocalTimeList_ScanNil(t *testing.T) {
+	as := assert.New(t)
+	list := LocalTimeList{LocalTimeOfHms(1, 0, 0)}
+	as.NoError(list.Scan(nil))
+	as.Equal(LocalTimeList{LocalTimeOfHms(1, 0, 0)}, list)
+}

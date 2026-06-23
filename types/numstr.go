@@ -4,15 +4,18 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+
+	"golang.org/x/exp/constraints"
 )
-import "golang.org/x/exp/constraints"
 
 // Num2Str 将任意整数类型的数值转换为字符串
 func Num2Str[T constraints.Integer](num T) string {
 	return fmt.Sprintf("%d", num)
 }
+
+// Num2StrP 等同 Num2Str，返回堆上字符串指针。
 func Num2StrP[T constraints.Integer](num T) *string {
-	var s = Num2Str(num)
+	s := Num2Str(num)
 	return &s
 }
 
@@ -78,6 +81,7 @@ func inRangeUnsigned(v uint64, t any) bool {
 	return false
 }
 
+// Str2NumMust 内部调用 Str2Num，失败时 panic。
 func Str2NumMust[T constraints.Integer](str string) T {
 	num, err := Str2Num[T](str)
 	if err != nil {
@@ -86,6 +90,7 @@ func Str2NumMust[T constraints.Integer](str string) T {
 	return num
 }
 
+// Str2NumMustP 内部调用 Str2NumMust，返回堆上指针。
 func Str2NumMustP[T constraints.Integer](str string) *T {
 	num := Str2NumMust[T](str)
 	return &num

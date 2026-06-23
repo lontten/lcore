@@ -48,6 +48,7 @@ func mustLocalTimeFromHms(h, m, s int) LocalTime {
 	return t
 }
 
+// localTimeFromPgTime 从 pgtype.Time 转为 LocalTime；无效元素返回零值。
 func localTimeFromPgTime(t pgtype.Time) (LocalTime, error) {
 	if !t.Valid {
 		return LocalTime{}, nil
@@ -69,6 +70,7 @@ func NowTime() LocalTime {
 	return localTimeFrom(time.Now())
 }
 
+// NowTimeP 返回当前本地墙钟时间的指针。
 func NowTimeP() *LocalTime {
 	t := NowTime()
 	return &t
@@ -82,6 +84,7 @@ func LocalTimeOf(v time.Time) LocalTime {
 	return LocalTime{v.Hour(), v.Minute(), v.Second()}
 }
 
+// LocalTimePOf 等同 LocalTimeOf，返回指针。
 func LocalTimePOf(t time.Time) *LocalTime {
 	timeOnly := LocalTimeOf(t)
 	return &timeOnly
@@ -95,6 +98,7 @@ func LocalTimeOfLoc(v time.Time) LocalTime {
 	return localTimeFrom(v)
 }
 
+// LocalTimePOfLoc 等同 LocalTimeOfLoc，返回指针。
 func LocalTimePOfLoc(t time.Time) *LocalTime {
 	timeOnly := LocalTimeOfLoc(t)
 	return &timeOnly
@@ -107,6 +111,7 @@ func LocalTimeOfHms(hour, min, sec int) LocalTime {
 	return mustLocalTimeFromHms(hour, min, sec)
 }
 
+// LocalTimePOfHms 等同 LocalTimeOfHms，返回指针。
 func LocalTimePOfHms(hour, min, sec int) *LocalTime {
 	timeOnly := LocalTimeOfHms(hour, min, sec)
 	return &timeOnly
@@ -114,10 +119,12 @@ func LocalTimePOfHms(hour, min, sec int) *LocalTime {
 
 // ----------------------- base ----------------------------
 
+// String 返回 "15:04:05" 格式字符串（含前导零）。
 func (t LocalTime) String() string {
 	return fmt.Sprintf("%02d:%02d:%02d", t.hour, t.minute, t.second)
 }
 
+// IsZero 判断是否为 00:00:00。
 func (t LocalTime) IsZero() bool {
 	return t.hour == 0 && t.minute == 0 && t.second == 0
 }
@@ -145,9 +152,7 @@ func (t LocalTime) AddData(d LocalDate) LocalDateTime {
 
 // ----------------------- comp ----------------------------
 
-// Before
-// t<d 返回true
-// t>=d 返回false
+// Before 当 t 早于 d 时返回 true。
 func (t LocalTime) Before(d LocalTime) bool {
 	if t.hour != d.hour {
 		return t.hour < d.hour
@@ -158,9 +163,7 @@ func (t LocalTime) Before(d LocalTime) bool {
 	return t.second < d.second
 }
 
-// After
-// t>d 返回true
-// t<=d 返回false
+// After 当 t 晚于 d 时返回 true。
 func (t LocalTime) After(d LocalTime) bool {
 	if t.hour != d.hour {
 		return t.hour > d.hour
@@ -171,9 +174,7 @@ func (t LocalTime) After(d LocalTime) bool {
 	return t.second > d.second
 }
 
-// Eq
-// t==d 返回true
-// t!=d 返回false
+// Eq 当 t 与 d 相等时返回 true。
 func (t LocalTime) Eq(d LocalTime) bool {
 	return t.hour == d.hour && t.minute == d.minute && t.second == d.second
 }
@@ -185,10 +186,12 @@ func (t LocalTime) ToGoTime() time.Time {
 	return t.toTime()
 }
 
+// ToLocalDateTime 在锚定日期上与墙钟时间组合为 LocalDateTime。
 func (t LocalTime) ToLocalDateTime() LocalDateTime {
 	return LocalDateTime{t.toTime()}
 }
 
+// ToLocalDateTimeP 等同 ToLocalDateTime，返回指针。
 func (t LocalTime) ToLocalDateTimeP() *LocalDateTime {
 	dt := t.ToLocalDateTime()
 	return &dt
@@ -209,6 +212,7 @@ func LocalTimeParse(data string) (LocalTime, error) {
 	return t, nil
 }
 
+// LocalTimeParseP 等同 LocalTimeParse，成功时返回堆上指针。
 func LocalTimeParseP(data string) (*LocalTime, error) {
 	t, err := LocalTimeParse(data)
 	if err != nil {
@@ -217,6 +221,7 @@ func LocalTimeParseP(data string) (*LocalTime, error) {
 	return &t, nil
 }
 
+// LocalTimeParseMust 内部调用 LocalTimeParse，失败时 panic。
 func LocalTimeParseMust(data string) LocalTime {
 	localTime, err := LocalTimeParse(data)
 	if err != nil {
@@ -225,6 +230,7 @@ func LocalTimeParseMust(data string) LocalTime {
 	return localTime
 }
 
+// LocalTimeParseMustP 内部调用 LocalTimeParseP，失败时 panic。
 func LocalTimeParseMustP(data string) *LocalTime {
 	localTime, err := LocalTimeParseP(data)
 	if err != nil {
@@ -235,6 +241,7 @@ func LocalTimeParseMustP(data string) *LocalTime {
 
 // ----------------------- json ----------------------------
 
+// MarshalJSON 输出带引号的墙钟时间字符串。
 func (t LocalTime) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + t.String() + `"`), nil
 }
@@ -302,25 +309,26 @@ func localTimeScanString(s string) (LocalTime, error) {
 // LocalTimeList PostgreSQL time 数组的 GORM 自定义类型。
 type LocalTimeList []LocalTime
 
-// Value 实现 driver.Valuer
+// Value 返回 time[] 的 PostgreSQL 文本字面量。
 func (p LocalTimeList) Value() (driver.Value, error) {
-	var k []LocalTime
-	k = p
-	marshal, err := json.Marshal(k)
+	marshal, err := json.Marshal([]LocalTime(p))
 	if err != nil {
 		return nil, err
 	}
-	var s = string(marshal)
+	s := string(marshal)
 	if s != "null" {
-		s = s[:0] + "{" + s[1:len(s)-1] + "}" + s[len(s):]
+		s = "{" + s[1:len(s)-1] + "}"
 	} else {
 		s = "{}"
 	}
 	return s, nil
 }
 
-// Scan 实现 sql.Scanner
+// Scan 从 PostgreSQL time[] 解析；nil 时不修改接收方。
 func (p *LocalTimeList) Scan(data any) error {
+	if data == nil {
+		return nil
+	}
 	var times pgtype.FlatArray[pgtype.Time]
 	if err := scanPgArray(pgtype.TimeArrayOID, data, &times); err != nil {
 		return err
