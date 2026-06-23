@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // LocalTime 本地墙钟时间（仅时分秒，不含日期与时区偏移）。
@@ -46,6 +46,20 @@ func mustLocalTimeFromHms(h, m, s int) LocalTime {
 		panic(err)
 	}
 	return t
+}
+
+func localTimeFromPgTime(t pgtype.Time) (LocalTime, error) {
+	if !t.Valid {
+		return LocalTime{}, nil
+	}
+	d := time.Duration(t.Microseconds) * time.Microsecond
+	if d < 0 || d >= 24*time.Hour {
+		return LocalTime{}, fmt.Errorf("invalid pgtype.Time microseconds: %d", t.Microseconds)
+	}
+	h := int(d / time.Hour)
+	m := int(d % time.Hour / time.Minute)
+	s := int(d % time.Minute / time.Second)
+	return localTimeFromHms(h, m, s)
 }
 
 // ----------------------- now ----------------------------
@@ -307,13 +321,17 @@ func (p LocalTimeList) Value() (driver.Value, error) {
 
 // Scan 实现 sql.Scanner
 func (p *LocalTimeList) Scan(data any) error {
-	array := pgtype.VarcharArray{}
-	if err := array.Scan(data); err != nil {
+	var times pgtype.FlatArray[pgtype.Time]
+	if err := scanPgArray(pgtype.TimeArrayOID, data, &times); err != nil {
 		return err
 	}
-	list := make([]LocalTime, len(array.Elements))
-	for i, element := range array.Elements {
-		list[i] = LocalTimeParseMust(element.String)
+	list := make([]LocalTime, len(times))
+	for i, element := range times {
+		t, err := localTimeFromPgTime(element)
+		if err != nil {
+			return err
+		}
+		list[i] = t
 	}
 	*p = list
 	return nil

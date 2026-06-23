@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // LocalDateTime 本地时区 日期时间
@@ -213,13 +213,15 @@ func (p LocalDateTimeList) Value() (driver.Value, error) {
 
 // Scan 实现方法
 func (p *LocalDateTimeList) Scan(data any) error {
-	array := pgtype.TimestampArray{}
-	if err := array.Scan(data); err != nil {
+	var stamps pgtype.FlatArray[pgtype.Timestamp]
+	if err := scanPgArray(pgtype.TimestampArrayOID, data, &stamps); err != nil {
 		return err
 	}
-	list := make([]LocalDateTime, len(array.Elements))
-	for i, element := range array.Elements {
-		list[i] = LocalDateTimeOf(element.Time)
+	list := make([]LocalDateTime, len(stamps))
+	for i, element := range stamps {
+		if element.Valid {
+			list[i] = LocalDateTimeOf(element.Time)
+		}
 	}
 	*p = list
 	return nil

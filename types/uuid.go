@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gofrs/uuid"
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pkg/errors"
 	"strings"
 )
@@ -113,20 +113,20 @@ func (p UUIDList) Value() (driver.Value, error) {
 
 // Scan 实现方法
 func (p *UUIDList) Scan(data any) error {
-	array := pgtype.UUIDArray{}
-	err := array.Scan(data)
-	if err != nil {
+	var uuids pgtype.FlatArray[pgtype.UUID]
+	if err := scanPgArray(pgtype.UUIDArrayOID, data, &uuids); err != nil {
 		return err
 	}
-	var list []UUID
-	list = make([]UUID, len(array.Elements))
-	for i, element := range array.Elements {
-		list[i] = element.Bytes
+	list := make([]UUID, len(uuids))
+	for i, element := range uuids {
+		if element.Valid {
+			u, err := uuid.FromBytes(element.Bytes[:])
+			if err != nil {
+				return err
+			}
+			list[i] = UUID(u)
+		}
 	}
-	marshal, err := json.Marshal(list)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(marshal, &p)
-	return err
+	*p = list
+	return nil
 }

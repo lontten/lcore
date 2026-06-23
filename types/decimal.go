@@ -4,7 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
 )
 
@@ -30,26 +30,20 @@ func (p DecimalList) Value() (driver.Value, error) {
 
 // Scan 实现方法
 func (p *DecimalList) Scan(data any) error {
-	array := pgtype.VarcharArray{}
-	err := array.Scan(data)
-	if err != nil {
+	var list []string
+	if err := scanPgArray(pgtype.TextArrayOID, data, &list); err != nil {
 		return err
 	}
-	var list []decimal.Decimal
-	list = make([]decimal.Decimal, len(array.Elements))
-	for i, element := range array.Elements {
-		fromString, err := decimal.NewFromString(element.String)
+	decimals := make([]decimal.Decimal, len(list))
+	for i, s := range list {
+		fromString, err := decimal.NewFromString(s)
 		if err != nil {
 			return err
 		}
-		list[i] = fromString
+		decimals[i] = fromString
 	}
-	marshal, err := json.Marshal(list)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(marshal, &p)
-	return err
+	*p = decimals
+	return nil
 }
 
 // ToDecimal 将整数、浮点数或字符串转换为 decimal.Decimal

@@ -246,3 +246,13 @@ func TestLocalTimeList(t *testing.T) {
 	as.True(scanned[0].IsZero())
 	as.True(scanned[2].IsZero())
 }
+
+func TestLocalTimeList_ScanPgLiteral(t *testing.T) {
+	as := assert.New(t)
+
+	var list LocalTimeList
+	as.NoError(list.Scan("{00:00:00,00:00:01}"))
+	as.Equal(2, len(list))
+	as.Equal(LocalTime{}, list[0])
+	as.Equal(LocalTimeOfHms(0, 0, 1), list[1])
+}
